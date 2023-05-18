@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tallersqlite/db_helper.dart';
 import 'productos.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,195 +9,151 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Map<String, dynamic>> _allData = [];
-  bool _isLoading = true;
+  TextEditingController _userController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  bool _showPassword =
+      false; // Variable para controlar la visibilidad de la contraseña
 
-  void _refreshData() async {
-    final data = await SQLHelper.getAllData();
-    setState(() {
-      _allData = data;
-      _isLoading = false;
-    });
-  }
+  void _login() {
+    String username = _userController.text.trim();
+    String password = _passwordController.text.trim();
 
-  @override
-  void initState() {
-    super.initState();
-    _refreshData();
-  }
-
-  Future<void> _addData() async {
-    await SQLHelper.createData(_titleController.text, _descController.text);
-    _refreshData();
-  }
-
-  Future<void> _updateData(int id) async {
-    await SQLHelper.updateData(id, _titleController.text, _descController.text);
-    _refreshData();
-  }
-
-  Future<void> _deleteData(int id) async {
-    await SQLHelper.deleteData(id);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      backgroundColor: Colors.redAccent,
-      content: Text("Data Deleted"),
-    ));
-    _refreshData();
-  }
-
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
-
-  void showBottomSheet(int? id) async {
-    if (id != null) {
-      final existingData =
-          _allData.firstWhere((element) => element['id'] == id);
-      _titleController.text = existingData['title'];
-      _descController.text = existingData['desc'];
-    }
-    showModalBottomSheet(
-      elevation: 5,
-      isScrollControlled: true,
-      context: context,
-      builder: (_) => Container(
-        padding: EdgeInsets.only(
-          top: 30,
-          left: 15,
-          right: 15,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 50,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Title",
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _descController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Description",
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (id == null) {
-                    await _addData();
-                  } else {
-                    await _updateData(id);
-                  }
-                  _titleController.text = "";
-                  _descController.text = "";
-                  // Hide bottom sheet
-                  Navigator.of(context).pop();
-                  print("Data Added");
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Text(
-                    id == null ? "Add Data" : "Update",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+    if (username.isEmpty || password.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text(
+              'No se puede ingresar sin llenar los campos de usuario y contraseña.'),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
             ),
           ],
         ),
-      ),
-    );
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const Productos()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 169, 212, 240),
       appBar: AppBar(
         title: const Text('Usuarios 👪'),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'productos') {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const Productos()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const Productos()),
+                );
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem<String>(
                 value: 'productos',
-                child: Text('productos'),
+                child: Text('Productos'),
               )
             ],
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : _allData.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Sin registros',
-                    style: TextStyle(fontSize: 24),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _allData.length,
-                  itemBuilder: (context, index) => Card(
-                    key: ValueKey(_allData[index]['id']),
-                    margin: const EdgeInsets.all(15),
-                    child: ListTile(
-                      title: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Text(
-                          _allData[index]['title'],
-                          style: const TextStyle(
-                            fontSize: 20,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('asset/images/fucsia.gif'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SizedBox(
+              height: 450,
+              child: Card(
+                color: Colors.white,
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 100,
+                        width: 400,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.purple,
+                            width: 2,
+                          ),
+                          color: const Color.fromARGB(255, 202, 153, 62),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '✨Registrarse✨',
+                            style: TextStyle(
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 255, 255, 255),
+                            ),
                           ),
                         ),
                       ),
-                      subtitle: Text(_allData[index]['desc']),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              showBottomSheet(_allData[index]['id']);
-                            },
-                            icon: const Icon(
-                              Icons.edit,
-                              color: Colors.indigo,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              _deleteData(_allData[index]['id']);
-                            },
-                            icon: const Icon(
-                              Icons.delete,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _userController,
+                        decoration: const InputDecoration(
+                          labelText: 'Usuario',
+                          prefixIcon: Icon(Icons.person),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 5),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: !_showPassword,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña',
+                          prefixIcon: const Icon(Icons.lock),
+                          suffixIcon: IconButton(
+                            icon: Icon(_showPassword
+                                ? Icons.visibility
+                                : Icons.visibility_off),
+                            onPressed: () {
+                              setState(() {
+                                _showPassword = !_showPassword;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(150, 50),
+                        ),
+                        child: const Text('Ingresar'),
+                      ),
+                    ],
                   ),
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showBottomSheet(null),
-        child: const Icon(Icons.add),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

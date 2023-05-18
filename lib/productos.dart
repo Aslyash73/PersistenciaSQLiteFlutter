@@ -29,12 +29,13 @@ class _ProductosState extends State<Productos> {
   }
 
   Future<void> _addData() async {
-    await SQLHelper.createData(_titleController.text, _descController.text);
+    await SQLHelper.createData(_productosController.text, _descController.text);
     _refreshData();
   }
 
   Future<void> _updateData(int id) async {
-    await SQLHelper.updateData(id, _titleController.text, _descController.text);
+    await SQLHelper.updateData(
+        id, _productosController.text, _descController.text);
     _refreshData();
   }
 
@@ -47,14 +48,14 @@ class _ProductosState extends State<Productos> {
     _refreshData();
   }
 
-  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _productosController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
 
   void showBottomSheet(int? id) async {
     if (id != null) {
       final existingData =
           _allData.firstWhere((element) => element['id'] == id);
-      _titleController.text = existingData['title'];
+      _productosController.text = existingData['title'];
       _descController.text = existingData['desc'];
     }
     showModalBottomSheet(
@@ -73,10 +74,10 @@ class _ProductosState extends State<Productos> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             TextField(
-              controller: _titleController,
+              controller: _productosController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Nombre",
+                hintText: "Escriba que producto quiere comprar",
               ),
             ),
             const SizedBox(height: 10),
@@ -85,7 +86,7 @@ class _ProductosState extends State<Productos> {
               maxLines: 4,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Correo",
+                hintText: "Ingrese la descripcion",
               ),
             ),
             const SizedBox(height: 20),
@@ -97,7 +98,7 @@ class _ProductosState extends State<Productos> {
                   } else {
                     await _updateData(id);
                   }
-                  _titleController.text = "";
+                  _productosController.text = "";
                   _descController.text = "";
                   // Hide bottom sheet
                   Navigator.of(context).pop();
@@ -123,75 +124,124 @@ class _ProductosState extends State<Productos> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 169, 212, 240),
-      appBar: AppBar(
-        title: const Text('Productos 📝'),
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : _allData.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Sin registros',
-                    style: TextStyle(fontSize: 24),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _allData.length,
-                  itemBuilder: (context, index) => Card(
-                    key: ValueKey(_allData[index]['id']),
-                    margin: const EdgeInsets.all(15),
-                    child: ListTile(
-                      title: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Text(
-                          _allData[index]['title'],
-                          style: const TextStyle(
-                            fontSize: 20,
+    return SafeArea(
+      top: true,
+      bottom: true,
+      left: true,
+      right: true,
+      child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 169, 212, 240),
+        appBar: AppBar(
+          title: const Text('Productos 📝'),
+        ),
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : _allData.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Sin registros',
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  )
+                : GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // Número de columnas en la grilla
+                      crossAxisSpacing: 10, // Espacio entre columnas
+                      mainAxisSpacing: 10, // Espacio entre filas
+                    ),
+                    itemCount: _allData.length,
+                    itemBuilder: (context, index) {
+                      final data = _allData[index];
+                      return Card(
+                        key: ValueKey(data['id']),
+                        margin: const EdgeInsets.all(10),
+                        child: InkWell(
+                          onTap: () {
+                            showBottomSheet(data['id']);
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                child: Text(
+                                  data['title'],
+                                  style: const TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                child: Text(
+                                  data['desc'],
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Checkbox(
+                                      value: _selectedItems[index],
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedItems[index] =
+                                              value ?? false;
+                                        });
+                                      },
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            onPressed: () {
+                                              showBottomSheet(data['id']);
+                                            },
+                                            icon: const Icon(
+                                              Icons.edit,
+                                              color: Colors.indigo,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            onPressed: () {
+                                              _deleteData(data['id']);
+                                            },
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      subtitle: Text(_allData[index]['desc']),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Checkbox(
-                            value: _selectedItems[index],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedItems[index] = value ?? false;
-                              });
-                            },
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              showBottomSheet(_allData[index]['id']);
-                            },
-                            icon: const Icon(
-                              Icons.edit,
-                              color: Colors.indigo,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              _deleteData(_allData[index]['id']);
-                            },
-                            icon: const Icon(
-                              Icons.delete,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showBottomSheet(null),
-        child: const Icon(Icons.shopping_cart),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => showBottomSheet(null),
+          child: const Icon(Icons.shopping_cart),
+        ),
       ),
     );
   }
