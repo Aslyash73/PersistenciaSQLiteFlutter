@@ -29,13 +29,14 @@ class _ProductosState extends State<Productos> {
   }
 
   Future<void> _addData() async {
-    await SQLHelper.createData(_productosController.text, _descController.text);
+    await SQLHelper.createData(
+        _productosController.text, _precioController.text);
     _refreshData();
   }
 
   Future<void> _updateData(int id) async {
     await SQLHelper.updateData(
-        id, _productosController.text, _descController.text);
+        id, _productosController.text, _precioController.text);
     _refreshData();
   }
 
@@ -49,14 +50,14 @@ class _ProductosState extends State<Productos> {
   }
 
   final TextEditingController _productosController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _precioController = TextEditingController();
 
   void showBottomSheet(int? id) async {
     if (id != null) {
       final existingData =
           _allData.firstWhere((element) => element['id'] == id);
       _productosController.text = existingData['title'];
-      _descController.text = existingData['desc'];
+      _precioController.text = existingData['desc'];
     }
     showModalBottomSheet(
       elevation: 5,
@@ -82,7 +83,7 @@ class _ProductosState extends State<Productos> {
             ),
             const SizedBox(height: 10),
             TextField(
-              controller: _descController,
+              controller: _precioController,
               maxLines: 4,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
@@ -99,7 +100,7 @@ class _ProductosState extends State<Productos> {
                     await _updateData(id);
                   }
                   _productosController.text = "";
-                  _descController.text = "";
+                  _precioController.text = "";
                   // Hide bottom sheet
                   Navigator.of(context).pop();
                   print("User Added");
@@ -130,8 +131,9 @@ class _ProductosState extends State<Productos> {
       left: true,
       right: true,
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 169, 212, 240),
+        backgroundColor: Color.fromARGB(255, 219, 183, 221),
         appBar: AppBar(
+          toolbarHeight: 80,
           title: const Text('Productos 📝'),
         ),
         body: _isLoading
@@ -148,9 +150,11 @@ class _ProductosState extends State<Productos> {
                 : GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // Número de columnas en la grilla
-                      crossAxisSpacing: 10, // Espacio entre columnas
-                      mainAxisSpacing: 10, // Espacio entre filas
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 15,
+                      childAspectRatio:
+                          0.75, // Relación de aspecto para ajustar el tamaño de las celdas
                     ),
                     itemCount: _allData.length,
                     itemBuilder: (context, index) {
@@ -166,67 +170,74 @@ class _ProductosState extends State<Productos> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6),
-                                child: Text(
-                                  data['title'],
-                                  style: const TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
+                                padding: const EdgeInsets.only(
+                                    top: 2, left: 5, right: 3),
+                                child: Align(
+                                  alignment: Alignment.topRight,
+                                  child: Checkbox(
+                                    value: _selectedItems[index],
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedItems[index] = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        data['title'],
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        data['desc'],
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                               Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text(
-                                  data['desc'],
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Checkbox(
-                                      value: _selectedItems[index],
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedItems[index] =
-                                              value ?? false;
-                                        });
+                                    IconButton(
+                                      onPressed: () {
+                                        showBottomSheet(data['id']);
                                       },
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.indigo,
+                                      ),
                                     ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          IconButton(
-                                            onPressed: () {
-                                              showBottomSheet(data['id']);
-                                            },
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: Colors.indigo,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            onPressed: () {
-                                              _deleteData(data['id']);
-                                            },
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.redAccent,
-                                            ),
-                                          ),
-                                        ],
+                                    IconButton(
+                                      onPressed: () {
+                                        _deleteData(data['id']);
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.redAccent,
                                       ),
                                     ),
                                   ],
