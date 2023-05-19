@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:tallersqlite/db_helper.dart';
 
 class Productos extends StatefulWidget {
@@ -12,6 +13,7 @@ class _ProductosState extends State<Productos> {
   List<Map<String, dynamic>> _allData = [];
   List<bool> _selectedItems = [];
   bool _isLoading = true;
+  int selectedItemCount = 0;
 
   void _refreshData() async {
     final data = await SQLHelper.getAllData();
@@ -74,20 +76,32 @@ class _ProductosState extends State<Productos> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            const Text(
+              "Ingrese el producto a comprar",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
             TextField(
               controller: _productosController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Escriba que producto quiere comprar",
+                hintText: "Escriba qué producto quiere comprar",
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _precioController,
-              maxLines: 4,
+              inputFormatters: [
+                FilteringTextInputFormatter
+                    .digitsOnly // Acepta solo valores numéricos
+              ],
+              keyboardType: TextInputType.number, // Muestra el teclado numérico
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Ingrese la descripcion",
+                hintText: "Ingrese el precio",
               ),
             ),
             const SizedBox(height: 20),
@@ -98,17 +112,18 @@ class _ProductosState extends State<Productos> {
                     await _addData();
                   } else {
                     await _updateData(id);
+                    await _updateData(id);
                   }
                   _productosController.text = "";
                   _precioController.text = "";
-                  // Hide bottom sheet
+// Ocultar el bottom sheet
                   Navigator.of(context).pop();
                   print("User Added");
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(18),
                   child: Text(
-                    id == null ? "Add Data" : "Update",
+                    id == null ? "Agregar compra" : "Actualizar",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
@@ -135,6 +150,17 @@ class _ProductosState extends State<Productos> {
         appBar: AppBar(
           toolbarHeight: 80,
           title: const Text('Productos 📝'),
+          actions: [
+            IconButton(
+              onPressed: () {
+                // Acción al presionar el ícono de corazón
+              },
+              icon: const Icon(
+                Icons.favorite,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
         body: _isLoading
             ? const Center(
@@ -179,6 +205,9 @@ class _ProductosState extends State<Productos> {
                                     onChanged: (value) {
                                       setState(() {
                                         _selectedItems[index] = value ?? false;
+                                        selectedItemCount = _selectedItems
+                                            .where((selected) => selected)
+                                            .length;
                                       });
                                     },
                                   ),
@@ -237,7 +266,7 @@ class _ProductosState extends State<Productos> {
                                       },
                                       icon: const Icon(
                                         Icons.delete,
-                                        color: Colors.redAccent,
+                                        color: Colors.amber,
                                       ),
                                     ),
                                   ],
@@ -251,7 +280,30 @@ class _ProductosState extends State<Productos> {
                   ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => showBottomSheet(null),
-          child: const Icon(Icons.shopping_cart),
+          child: Stack(
+            children: [
+              const Icon(Icons.shopping_cart),
+              if (selectedItemCount > 0)
+                Positioned(
+                  left: 5,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.amber,
+                    ),
+                    child: Text(
+                      selectedItemCount.toString(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
